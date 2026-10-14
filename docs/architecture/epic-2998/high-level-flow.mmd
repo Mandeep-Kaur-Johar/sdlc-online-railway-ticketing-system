@@ -1,18 +1,17 @@
 flowchart TD
-    Start["Passenger opens web app"]
-    Search["Search trains - US 3000"]
-    Avail["View seat availability by class - US 3001"]
-    Profile["Select or save passenger profile - US 3004"]
-    Book["Create booking and hold seats 15 min - US 3003"]
-    Pay["Pay via PSP - US 3006"]
-    Decision{"Payment settled?"}
-    Ticket["Issue ticket and booking reference RLY-2998-000123"]
-    Release["Release seat hold after 15 min expiry"]
-    Notify["Send email and SMS confirmation - US 3009"]
-    Cancel["Cancel ticket and compute refund - US 3007"]
-    Support["Raise support request - US 3010"]
-    Start --> Search --> Avail --> Profile --> Book --> Pay --> Decision
-    Decision -->|Yes| Ticket --> Notify
-    Decision -->|No| Release
+    Search["Search trains US 3000"]
+    Avail["View seat availability by class US 3001"]
+    Profile["Select passenger profile US 3004"]
+    Book["Create booking hold seats 15 min US 3003"]
+    Pay["Pay via payment provider US 3006"]
+    Ticket["Issue ticket and booking reference"]
+    Release["Release seat hold on expiry"]
+    Notify["Email and SMS confirmation US 3009"]
+    Cancel["Cancel ticket and refund US 3007"]
+    Support["Raise support request US 3010"]
+    Search --> Avail --> Profile --> Book --> Pay
+    Pay --> Ticket
+    Pay --> Release
+    Ticket --> Notify
     Notify --> Cancel
     Notify --> Support
