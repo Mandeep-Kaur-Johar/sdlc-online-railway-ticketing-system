@@ -1,31 +1,36 @@
-%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
 flowchart TB
-    Passenger(["Passenger"])
-    subgraph Azure["Azure Subscription"]
-        subgraph Edge["Edge"]
-            FrontDoor["Azure Front Door / WAF"]
-        end
-        subgraph StaticApps["Azure Static Web Apps"]
-            ReactUI["React TypeScript Web UI"]
-        end
-        subgraph AppService["Azure App Service"]
-            RailwayAPI["Railway Ticketing API (.NET 8)"]
-        end
-        RailwayDB[("Azure SQL Database")]
-        KeyVault["Azure Key Vault"]
-        AppInsights["Application Insights"]
-        LogAnalytics["Log Analytics"]
+    subgraph Client["Client Tier"]
+        Browser["Passenger browser HTTPS TLS 1.2+"]
     end
-    subgraph External["External Systems"]
-        PaymentGateway(["Payment Gateway"])
-        NotificationProvider(["Email/SMS Provider"])
+    subgraph Azure["Azure Region - Primary with zone redundancy"]
+        subgraph Public["Public Edge"]
+            FD["Azure Front Door and CDN"]
+            AGW["Application Gateway WAF prevention mode CRS 3.2"]
+            SWA["Azure Static Web Apps - React SPA"]
+        end
+        subgraph VNet["Virtual Network with NSGs and private endpoints"]
+            AKS["AKS cluster - 5 .NET 8 service deployments, blue-green"]
+            SQLDB[("Azure SQL Database railwaydb General Purpose zone redundant, PITR 35 days")]
+            Redis[("Azure Cache for Redis")]
+            Bus["Azure Service Bus topic booking-events"]
+            KV["Azure Key Vault - soft delete and purge protection"]
+        end
+        subgraph Obs["Observability"]
+            AI["Application Insights"]
+            LA["Log Analytics - 365 day audit retention"]
+        end
     end
-    Passenger -->|HTTPS| FrontDoor
-    FrontDoor -->|HTTPS| ReactUI
-    ReactUI -->|HTTPS/JSON + JWT| RailwayAPI
-    RailwayAPI -->|TDS/SQL| RailwayDB
-    RailwayAPI -->|Fetch secrets| KeyVault
-    RailwayAPI -->|REST/HTTPS| PaymentGateway
-    RailwayAPI -->|REST/HTTPS| NotificationProvider
-    RailwayAPI -.->|Telemetry| AppInsights
-    AppInsights --> LogAnalytics
+    subgraph Ext["External"]
+        PSP["Payment Service Provider"]
+        Comms["Email and SMS Provider"]
+    end
+    Browser --> FD --> SWA
+    FD --> AGW --> AKS
+    AKS -->|Private endpoint| SQLDB
+    AKS -->|Private endpoint| Redis
+    AKS -->|Private endpoint| Bus
+    AKS -->|Managed identity| KV
+    AKS -.-> AI
+    AI --> LA
+    AKS -->|HTTPS outbound| PSP
+    AKS -->|HTTPS outbound| Comms

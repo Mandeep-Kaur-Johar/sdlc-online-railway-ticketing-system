@@ -1,61 +1,46 @@
-%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
 flowchart TB
-    subgraph UIModules["React TypeScript Web UI"]
-        SearchUI["Train Search UI"]
-        BookingUI["Booking UI"]
-        ProfileUI["Passenger Profile UI"]
-        PaymentUI["Payment UI"]
-        SupportUI["Support Request UI"]
+    subgraph UI["React 18 TypeScript SPA"]
+        SearchPage["Search and Availability Pages"]
+        BookingPage["Booking and Profile Pages"]
+        PaymentPage["Payment and Cancellation Pages"]
+        SupportPage["Support Request Pages"]
     end
-    subgraph Controllers["API Controllers"]
-        TrainSearchAPI["Train Search API"]
-        BookingAPI["Booking API"]
-        PassengerAPI["Passenger Profile API"]
-        PaymentAPI["Payment API"]
-        NotificationAPI["Notification API"]
-        SupportAPI["Support API"]
+    subgraph SearchSvc["Search Service"]
+        SearchCtl["TrainSearchController GET /api/v1/trains/search"]
+        AvailSvc["AvailabilityService - class level inventory"]
+        CacheRepo["RedisCacheRepository 60s TTL"]
     end
-    subgraph Services["Domain Services"]
-        TrainSearchService["Train Search Service"]
-        SeatAvailabilityService["Seat Availability Service"]
-        BookingService["Booking Service"]
-        PassengerService["Passenger Service"]
-        PaymentService["Payment Service"]
-        RefundService["Refund Service"]
-        NotificationService["Notification Service"]
-        SupportService["Support Service"]
+    subgraph BookingSvc["Booking Service"]
+        BookingCtl["BookingsController POST /api/v1/bookings"]
+        ProfileCtl["PassengerProfilesController"]
+        SeatLock["SeatInventoryLockManager - max 6 passengers"]
+        RefGen["BookingReferenceGenerator RLY-2998-000123"]
     end
-    subgraph Repositories["Data Access"]
-        TrainRepository["Train Repository"]
-        BookingRepository["Booking Repository"]
-        PassengerRepository["Passenger Repository"]
-        PaymentRepository["Payment Repository"]
-        SupportRepository["Support Repository"]
+    subgraph PaymentSvc["Payment Service"]
+        PayCtl["PaymentsController payment intent"]
+        Webhook["WebhookVerifier HMAC-SHA256"]
+        RefundEng["RefundPolicyEngine - hours before departure table"]
+        TicketIssuer["TicketIssuer - 15 min hold expiry"]
     end
-    RailwayDB[("Azure SQL Database")]
-    SearchUI --> TrainSearchAPI
-    BookingUI --> BookingAPI
-    ProfileUI --> PassengerAPI
-    PaymentUI --> PaymentAPI
-    SupportUI --> SupportAPI
-    TrainSearchAPI --> TrainSearchService
-    TrainSearchAPI --> SeatAvailabilityService
-    BookingAPI --> BookingService
-    PassengerAPI --> PassengerService
-    PaymentAPI --> PaymentService
-    PaymentAPI --> RefundService
-    NotificationAPI --> NotificationService
-    SupportAPI --> SupportService
-    TrainSearchService --> TrainRepository
-    SeatAvailabilityService --> TrainRepository
-    BookingService --> BookingRepository
-    BookingService --> NotificationService
-    PassengerService --> PassengerRepository
-    PaymentService --> PaymentRepository
-    RefundService --> PaymentRepository
-    SupportService --> SupportRepository
-    TrainRepository -->|SQL| RailwayDB
-    BookingRepository -->|SQL| RailwayDB
-    PassengerRepository -->|SQL| RailwayDB
-    PaymentRepository -->|SQL| RailwayDB
-    SupportRepository -->|SQL| RailwayDB
+    subgraph NotifySvc["Notification Service"]
+        BusSub["ServiceBusSubscriber booking-events"]
+        Dispatch["NotificationDispatcher - 10 attempts then DLQ"]
+    end
+    subgraph SupportSvc["Support Service"]
+        SupportCtl["SupportRequestsController"]
+        SupportWf["SupportWorkflow logged tracked closed"]
+    end
+    SearchPage --> SearchCtl
+    BookingPage --> BookingCtl
+    BookingPage --> ProfileCtl
+    PaymentPage --> PayCtl
+    SupportPage --> SupportCtl
+    SearchCtl --> AvailSvc --> CacheRepo
+    BookingCtl --> SeatLock
+    BookingCtl --> RefGen
+    PayCtl --> TicketIssuer
+    Webhook --> TicketIssuer
+    PayCtl --> RefundEng
+    RefGen --> BusSub
+    BusSub --> Dispatch
+    SupportCtl --> SupportWf

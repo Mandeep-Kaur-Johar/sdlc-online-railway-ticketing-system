@@ -1,22 +1,18 @@
 flowchart TD
-  P[Passenger Browser React 18 TypeScript] -->|HTTPS TLS 1.2+ JWT| AGW[Azure Application Gateway WAF]
-  AGW --> APIM[API Gateway Rate Limit 100 rps]
-  APIM --> SEARCH[Search Service .NET 8 Web API US 3000 3001]
-  APIM --> BOOK[Booking Service .NET 8 Web API US 3003 3004]
-  APIM --> PAY[Payment Service .NET 8 Web API US 3006 3007]
-  APIM --> NOTIF[Notification Service .NET 8 Worker US 3009]
-  APIM --> SUP[Support Service .NET 8 Web API US 3010]
-  SEARCH --> CACHE[(Azure Cache for Redis TTL 60s)]
-  SEARCH --> SQL[(Azure SQL Database railwaydb)]
-  BOOK --> SQL
-  PAY --> SQL
-  SUP --> SQL
-  PAY -->|HTTPS webhook| PSP[External Payment Gateway]
-  NOTIF -->|SMTP and SMS API| COMMS[Email and SMS Provider]
-  BOOK -->|booking events| BUS[Azure Service Bus topic booking-events]
-  BUS --> NOTIF
-  SEARCH --> AI[Application Insights]
-  BOOK --> AI
-  PAY --> AI
-  NOTIF --> AI
-  SUP --> AI
+    Start["Passenger opens web app"]
+    Search["Search trains - US 3000"]
+    Avail["View seat availability by class - US 3001"]
+    Profile["Select or save passenger profile - US 3004"]
+    Book["Create booking and hold seats 15 min - US 3003"]
+    Pay["Pay via PSP - US 3006"]
+    Decision{"Payment settled?"}
+    Ticket["Issue ticket and booking reference RLY-2998-000123"]
+    Release["Release seat hold after 15 min expiry"]
+    Notify["Send email and SMS confirmation - US 3009"]
+    Cancel["Cancel ticket and compute refund - US 3007"]
+    Support["Raise support request - US 3010"]
+    Start --> Search --> Avail --> Profile --> Book --> Pay --> Decision
+    Decision -->|Yes| Ticket --> Notify
+    Decision -->|No| Release
+    Notify --> Cancel
+    Notify --> Support

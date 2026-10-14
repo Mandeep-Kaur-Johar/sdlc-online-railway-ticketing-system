@@ -1,78 +1,76 @@
-%%{init: {"theme":"default","securityLevel":"loose"} }%%
 erDiagram
+    STATION ||--o{ SCHEDULE : serves
+    TRAIN ||--o{ SCHEDULE : operates
+    SCHEDULE ||--o{ SEAT_INVENTORY : has
+    PASSENGER_PROFILE ||--o{ PASSENGER : reused_as
+    BOOKING ||--|{ PASSENGER : includes
+    BOOKING ||--o{ TICKET : issues
+    BOOKING ||--|| PAYMENT : settled_by
+    PAYMENT ||--o{ REFUND : reverses
+    BOOKING ||--o{ NOTIFICATION : triggers
+    BOOKING ||--o{ SUPPORT_REQUEST : referenced_by
     STATION {
         int StationId PK
-        string StationCode
+        string StationCode UK
         string StationName
     }
     TRAIN {
         int TrainId PK
-        string TrainNumber
+        string TrainNumber UK
         string TrainName
-        int SourceStationId FK
-        int DestinationStationId FK
     }
-    TRAIN_SCHEDULE {
+    SCHEDULE {
         int ScheduleId PK
         int TrainId FK
-        date TravelDate
-        time DepartureTime
-        time ArrivalTime
-    }
-    TRAVEL_CLASS {
-        int TravelClassId PK
-        string ClassCode
-        string ClassName
+        int SourceStationId FK
+        int DestinationStationId FK
+        datetime DepartureTime
+        datetime ArrivalTime
     }
     SEAT_INVENTORY {
         int SeatInventoryId PK
         int ScheduleId FK
-        int TravelClassId FK
-        int TotalSeats
+        date TravelDate
+        string TravelClass
         int AvailableSeats
         decimal Fare
     }
-    USER_ACCOUNT {
-        int UserId PK
-        string Email
-        string PhoneNumber
-        string Role
-    }
     PASSENGER_PROFILE {
-        int PassengerProfileId PK
-        int UserId FK
-        string FullName
-        int Age
-        string Gender
+        int ProfileId PK
+        string FullName "PII Always Encrypted"
+        string ContactEmail "PII Always Encrypted"
+        string ContactPhone "PII Always Encrypted"
     }
     BOOKING {
         int BookingId PK
-        string BookingReference
-        int UserId FK
+        string BookingReference UK
         int ScheduleId FK
-        int TravelClassId FK
-        string BookingStatus
-        decimal TotalFare
-        datetime CreatedDate
+        date TravelDate
+        string Status
+        datetime HoldExpiresAt
     }
-    BOOKING_PASSENGER {
-        int BookingPassengerId PK
+    PASSENGER {
+        int PassengerId PK
         int BookingId FK
-        int PassengerProfileId FK
+        int ProfileId FK
         string SeatNumber
+    }
+    TICKET {
+        int TicketId PK
+        int BookingId FK
+        string TicketStatus
+        datetime IssuedAt
     }
     PAYMENT {
         int PaymentId PK
         int BookingId FK
-        string PaymentMethod
         decimal Amount
+        string PspReference
         string PaymentStatus
-        string GatewayReference
     }
-    CANCELLATION {
-        int CancellationId PK
-        int BookingId FK
-        datetime CancelledDate
+    REFUND {
+        int RefundId PK
+        int PaymentId FK
         decimal RefundAmount
         string RefundStatus
     }
@@ -80,28 +78,13 @@ erDiagram
         int NotificationId PK
         int BookingId FK
         string Channel
-        string NotificationType
         string DeliveryStatus
+        int AttemptCount
     }
     SUPPORT_REQUEST {
         int SupportRequestId PK
-        int UserId FK
         int BookingId FK
-        string Subject
+        string Category
         string Status
-        datetime CreatedDate
+        datetime FirstResponseAt
     }
-    STATION ||--o{ TRAIN : origin
-    TRAIN ||--o{ TRAIN_SCHEDULE : runs
-    TRAIN_SCHEDULE ||--o{ SEAT_INVENTORY : offers
-    TRAVEL_CLASS ||--o{ SEAT_INVENTORY : categorizes
-    USER_ACCOUNT ||--o{ PASSENGER_PROFILE : saves
-    USER_ACCOUNT ||--o{ BOOKING : places
-    TRAIN_SCHEDULE ||--o{ BOOKING : reserved_on
-    BOOKING ||--o{ BOOKING_PASSENGER : includes
-    PASSENGER_PROFILE ||--o{ BOOKING_PASSENGER : travels_as
-    BOOKING ||--o{ PAYMENT : paid_by
-    BOOKING ||--o{ CANCELLATION : cancelled_by
-    BOOKING ||--o{ NOTIFICATION : notified_by
-    USER_ACCOUNT ||--o{ SUPPORT_REQUEST : raises
-    BOOKING ||--o{ SUPPORT_REQUEST : referenced_by

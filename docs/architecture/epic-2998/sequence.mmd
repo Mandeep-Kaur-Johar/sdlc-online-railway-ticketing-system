@@ -1,29 +1,42 @@
-%%{init: {"theme":"default","securityLevel":"loose"} }%%
 sequenceDiagram
-    actor Passenger
-    participant ReactUI as React TypeScript Web UI
-    participant TrainSearchAPI as Train Search API
-    participant BookingAPI as Booking API
-    participant PaymentAPI as Payment API
-    participant PaymentGateway as Payment Gateway
-    participant NotificationAPI as Notification API
-    participant RailwayDB as Azure SQL Database
-    Passenger->>ReactUI: Enter source, destination, date
-    ReactUI->>TrainSearchAPI: GET /api/trains/search
-    TrainSearchAPI->>RailwayDB: Query trains, schedules, fares
-    RailwayDB-->>TrainSearchAPI: Matching trains
-    TrainSearchAPI-->>ReactUI: Trains with availability by class
-    ReactUI->>BookingAPI: POST /api/bookings
-    BookingAPI->>RailwayDB: Reserve seats, create booking reference
-    BookingAPI-->>ReactUI: Booking pending payment
-    ReactUI->>PaymentAPI: POST /api/payments
-    PaymentAPI->>PaymentGateway: Authorize payment
-    PaymentGateway-->>PaymentAPI: Payment result
-    alt Payment successful
-        PaymentAPI->>RailwayDB: Confirm booking and issue ticket
-        PaymentAPI->>NotificationAPI: Trigger confirmation
-        PaymentAPI-->>ReactUI: Ticket confirmed
-    else Payment failed
-        PaymentAPI->>RailwayDB: Release seats, booking unconfirmed
-        PaymentAPI-->>ReactUI: Payment failed, no confirmed ticket
+    autonumber
+    actor P as Passenger
+    participant UI as React SPA
+    participant GW as API Gateway
+    participant S as Search Service
+    participant R as Redis Cache
+    participant B as Booking Service
+    participant DB as Azure SQL railwaydb
+    participant PS as Payment Service
+    participant PSP as Payment Provider
+    participant SB as Service Bus
+    participant N as Notification Service
+    P->>UI: Enter source, destination, travel date
+    UI->>GW: GET /api/v1/trains/search with JWT
+    GW->>S: Forward with correlation ID
+    S->>R: Read cached availability
+    alt Cache hit
+        R-->>S: Availability p95 under 500 ms
+    else Cache miss
+        S->>DB: Query schedules and seat inventory
+        DB-->>S: Trains, fares, class availability
+        S->>R: Populate cache 60s TTL
+    end
+    S-->>UI: Matching trains with schedules and fares
+    P->>UI: Select train, class and passengers (max 6)
+    UI->>B: POST /api/v1/bookings with Idempotency-Key
+    B->>DB: Pessimistic lock and hold seats 15 minutes
+    DB-->>B: Booking reference RLY-2998-000123
+    B-->>UI: Booking pending payment
+    UI->>PS: Create payment intent
+    PS->>PSP: Payment intent (tokenised, no card data stored)
+    PSP-->>PS: HMAC-SHA256 signed webhook settlement
+    alt Payment settled
+        PS->>DB: Confirm booking and issue ticket
+        PS->>SB: Publish BookingConfirmed
+        SB->>N: Deliver event
+        N-->>P: Email and SMS confirmation
+    else Payment failed or hold expired
+        PS->>DB: Release seat hold, no confirmed ticket
+        PS-->>UI: RFC 7807 problem details with correlation ID
     end

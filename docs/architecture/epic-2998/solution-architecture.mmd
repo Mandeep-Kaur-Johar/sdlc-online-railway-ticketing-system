@@ -1,47 +1,48 @@
-%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
 flowchart TB
-    Passenger(["Passenger"])
+    Passenger["Passenger browser"]
+    subgraph Edge["Edge Layer"]
+        AGW["Azure Application Gateway WAF OWASP CRS 3.2"]
+        GW["API Gateway - 100 rps limit, correlation IDs"]
+    end
     subgraph Frontend["Frontend Layer"]
-        ReactUI["React TypeScript Web UI"]
+        SPA["React 18 TypeScript SPA on Azure Static Web Apps"]
     end
-    subgraph Security["Security Layer"]
-        JwtAuth["JWT Authentication"]
-        RoleAuthz["Role-Based Authorization"]
-    end
-    subgraph Backend["Backend Layer - ASP.NET Core .NET 8"]
-        TrainSearchAPI["Train Search API"]
-        BookingAPI["Booking API"]
-        PassengerAPI["Passenger Profile API"]
-        PaymentAPI["Payment API"]
-        NotificationAPI["Notification API"]
-        SupportAPI["Support API"]
+    subgraph Services["Backend Layer - .NET 8 ASP.NET Core Web API"]
+        SearchSvc["Search Service - Feature 2999"]
+        BookingSvc["Booking Service - Feature 3002"]
+        PaymentSvc["Payment Service - Feature 3005"]
+        NotifySvc["Notification Service - Feature 3008"]
+        SupportSvc["Support Service - US 3010"]
     end
     subgraph Data["Data Layer"]
-        RailwayDB[("Azure SQL Database")]
-    end
-    subgraph External["External Systems"]
-        PaymentGateway(["Payment Gateway"])
-        NotificationProvider(["Email/SMS Provider"])
+        SQLDB[("Azure SQL Database railwaydb")]
+        Redis[("Azure Cache for Redis - 60s TTL")]
+        Bus["Azure Service Bus topic booking-events"]
     end
     subgraph Platform["Platform Services"]
-        KeyVault["Azure Key Vault"]
-        AppInsights["Application Insights"]
+        KV["Azure Key Vault - 90 day rotation"]
+        AI["Application Insights and Log Analytics"]
     end
-    Passenger -->|HTTPS| ReactUI
-    ReactUI -->|HTTPS/JSON| JwtAuth
-    JwtAuth --> RoleAuthz
-    RoleAuthz --> TrainSearchAPI
-    RoleAuthz --> BookingAPI
-    RoleAuthz --> PassengerAPI
-    RoleAuthz --> PaymentAPI
-    RoleAuthz --> NotificationAPI
-    RoleAuthz --> SupportAPI
-    TrainSearchAPI -->|SQL| RailwayDB
-    BookingAPI -->|SQL| RailwayDB
-    PassengerAPI -->|SQL| RailwayDB
-    PaymentAPI -->|SQL| RailwayDB
-    SupportAPI -->|SQL| RailwayDB
-    PaymentAPI -->|REST/HTTPS| PaymentGateway
-    NotificationAPI -->|REST/HTTPS| NotificationProvider
-    BookingAPI -->|Fetch secrets| KeyVault
-    PaymentAPI -.->|Telemetry| AppInsights
+    subgraph External["External Systems"]
+        PSP["Payment Service Provider"]
+        Comms["Email and SMS Provider"]
+    end
+    Passenger -->|HTTPS TLS 1.2+| SPA
+    SPA -->|JWT 15 min access token| AGW
+    AGW --> GW
+    GW --> SearchSvc
+    GW --> BookingSvc
+    GW --> PaymentSvc
+    GW --> SupportSvc
+    SearchSvc -->|Cache read 60s TTL| Redis
+    SearchSvc -->|TDS private endpoint| SQLDB
+    BookingSvc -->|Pessimistic seat lock| SQLDB
+    PaymentSvc -->|Payments and refunds| SQLDB
+    SupportSvc --> SQLDB
+    BookingSvc -->|BookingConfirmed BookingCancelled| Bus
+    PaymentSvc -->|REST HTTPS payment intent| PSP
+    PSP -->|HMAC-SHA256 webhook| PaymentSvc
+    Bus -->|Subscriber 10 attempts then DLQ| NotifySvc
+    NotifySvc -->|Email and SMS| Comms
+    Services -->|Managed identity secrets| KV
+    Services -.->|Telemetry 365 day retention| AI

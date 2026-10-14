@@ -1,11 +1,15 @@
-%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
 flowchart TB
-    Passenger(["Passenger"])
-    SupportAgent(["Support Agent"])
-    PaymentGateway(["Payment Gateway"])
-    NotificationProvider(["Email/SMS Provider"])
-    RailwayTicketingSystem["Online Railway Ticketing System"]
-    Passenger -->|HTTPS| RailwayTicketingSystem
-    SupportAgent -->|HTTPS| RailwayTicketingSystem
-    RailwayTicketingSystem -->|REST/HTTPS| PaymentGateway
-    RailwayTicketingSystem -->|REST/HTTPS| NotificationProvider
+    Passenger["Passenger"]
+    SupportAgent["Support Agent"]
+    Admin["Administrator"]
+    System["Online Railway Ticketing System - Epic 2998"]
+    PSP["Payment Service Provider"]
+    Comms["Email and SMS Provider"]
+    Operator["Railway Operator Timetable Feed"]
+    Passenger -->|HTTPS TLS 1.2+ JWT| System
+    SupportAgent -->|HTTPS SupportAgent role| System
+    Admin -->|HTTPS Administrator role| System
+    System -->|REST HTTPS payment intent| PSP
+    PSP -->|HMAC-SHA256 signed webhook| System
+    System -->|REST HTTPS notifications| Comms
+    Operator -->|Schedule and route master data| System

@@ -1,13 +1,16 @@
-%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
 flowchart LR
-    Developer(["Developer"]) -->|feature/story branch| PullRequest["Pull Request"]
-    PullRequest --> Build["Build (.NET 8 + React)"]
-    Build --> Tests["Unit and Integration Tests"]
-    Tests --> Scan["CodeQL, Dependency and Secret Scan"]
-    Scan --> Artifact["Versioned Artifact"]
-    Artifact --> DevEnv["Dev Environment (auto deploy)"]
-    DevEnv --> TestEnv["Test Environment (RC tag + regression)"]
-    TestEnv --> Approval["Release Manager Approval"]
-    Approval --> Staging["Production Staging Slot"]
-    Staging -->|Smoke test and slot swap| Production["Production"]
-    Production -.->|Rollback by slot swap| Staging
+    Dev["Developer commit"]
+    PR["Pull request - 2 approvals"]
+    Build["GitHub Actions build - npm and dotnet 8"]
+    Unit["Unit tests - 80 percent overall, 90 percent Booking and Payment"]
+    Scan["CodeQL, dependency and secret scanning"]
+    Artifact["Versioned container image and SPA bundle"]
+    DevEnv["Dev environment auto deploy"]
+    Integration["Integration and contract tests"]
+    QA["QA environment - manual approval"]
+    Perf["Load test - 500 concurrent search users, 100 bookings per minute"]
+    Stage["Staging slot"]
+    Prod["Production blue-green swap - Sunday 02:00-04:00 UTC window"]
+    Monitor["Application Insights monitoring and rollback"]
+    Dev --> PR --> Build --> Unit --> Scan --> Artifact --> DevEnv --> Integration --> QA --> Perf --> Stage --> Prod --> Monitor
+    Monitor -.->|Failed health gate| Stage
