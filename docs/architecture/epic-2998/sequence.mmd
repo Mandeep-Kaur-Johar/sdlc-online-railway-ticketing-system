@@ -9,34 +9,31 @@ sequenceDiagram
     participant DB as Azure SQL railwaydb
     participant PS as Payment Service
     participant PSP as Payment Provider
-    participant SB as Service Bus
     participant N as Notification Service
-    P->>UI: Enter source, destination, travel date
-    UI->>GW: GET /api/v1/trains/search with JWT
+    P->>UI: Enter source destination and travel date
+    UI->>GW: GET api v1 trains search with JWT
     GW->>S: Forward with correlation ID
     S->>R: Read cached availability
     alt Cache hit
         R-->>S: Availability p95 under 500 ms
     else Cache miss
         S->>DB: Query schedules and seat inventory
-        DB-->>S: Trains, fares, class availability
+        DB-->>S: Trains fares and class availability
         S->>R: Populate cache 60s TTL
     end
     S-->>UI: Matching trains with schedules and fares
-    P->>UI: Select train, class and passengers (max 6)
-    UI->>B: POST /api/v1/bookings with Idempotency-Key
+    P->>UI: Select train class and passengers max 6
+    UI->>B: POST api v1 bookings with Idempotency Key
     B->>DB: Pessimistic lock and hold seats 15 minutes
-    DB-->>B: Booking reference RLY-2998-000123
-    B-->>UI: Booking pending payment
+    DB-->>B: Booking reference created
     UI->>PS: Create payment intent
-    PS->>PSP: Payment intent (tokenised, no card data stored)
-    PSP-->>PS: HMAC-SHA256 signed webhook settlement
+    PS->>PSP: Tokenised payment intent no card data stored
+    PSP-->>PS: HMAC SHA256 signed webhook settlement
     alt Payment settled
         PS->>DB: Confirm booking and issue ticket
-        PS->>SB: Publish BookingConfirmed
-        SB->>N: Deliver event
+        PS->>N: Publish BookingConfirmed event
         N-->>P: Email and SMS confirmation
     else Payment failed or hold expired
-        PS->>DB: Release seat hold, no confirmed ticket
+        PS->>DB: Release seat hold no confirmed ticket
         PS-->>UI: RFC 7807 problem details with correlation ID
     end
