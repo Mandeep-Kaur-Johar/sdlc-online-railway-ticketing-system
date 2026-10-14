@@ -1,0 +1,61 @@
+%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
+flowchart TB
+    subgraph UIModules["React TypeScript Web UI"]
+        SearchUI["Train Search UI"]
+        BookingUI["Booking UI"]
+        ProfileUI["Passenger Profile UI"]
+        PaymentUI["Payment UI"]
+        SupportUI["Support Request UI"]
+    end
+    subgraph Controllers["API Controllers"]
+        TrainSearchAPI["Train Search API"]
+        BookingAPI["Booking API"]
+        PassengerAPI["Passenger Profile API"]
+        PaymentAPI["Payment API"]
+        NotificationAPI["Notification API"]
+        SupportAPI["Support API"]
+    end
+    subgraph Services["Domain Services"]
+        TrainSearchService["Train Search Service"]
+        SeatAvailabilityService["Seat Availability Service"]
+        BookingService["Booking Service"]
+        PassengerService["Passenger Service"]
+        PaymentService["Payment Service"]
+        RefundService["Refund Service"]
+        NotificationService["Notification Service"]
+        SupportService["Support Service"]
+    end
+    subgraph Repositories["Data Access"]
+        TrainRepository["Train Repository"]
+        BookingRepository["Booking Repository"]
+        PassengerRepository["Passenger Repository"]
+        PaymentRepository["Payment Repository"]
+        SupportRepository["Support Repository"]
+    end
+    RailwayDB[("Azure SQL Database")]
+    SearchUI --> TrainSearchAPI
+    BookingUI --> BookingAPI
+    ProfileUI --> PassengerAPI
+    PaymentUI --> PaymentAPI
+    SupportUI --> SupportAPI
+    TrainSearchAPI --> TrainSearchService
+    TrainSearchAPI --> SeatAvailabilityService
+    BookingAPI --> BookingService
+    PassengerAPI --> PassengerService
+    PaymentAPI --> PaymentService
+    PaymentAPI --> RefundService
+    NotificationAPI --> NotificationService
+    SupportAPI --> SupportService
+    TrainSearchService --> TrainRepository
+    SeatAvailabilityService --> TrainRepository
+    BookingService --> BookingRepository
+    BookingService --> NotificationService
+    PassengerService --> PassengerRepository
+    PaymentService --> PaymentRepository
+    RefundService --> PaymentRepository
+    SupportService --> SupportRepository
+    TrainRepository -->|SQL| RailwayDB
+    BookingRepository -->|SQL| RailwayDB
+    PassengerRepository -->|SQL| RailwayDB
+    PaymentRepository -->|SQL| RailwayDB
+    SupportRepository -->|SQL| RailwayDB

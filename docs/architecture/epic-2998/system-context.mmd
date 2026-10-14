@@ -1,0 +1,11 @@
+%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
+flowchart TB
+    Passenger(["Passenger"])
+    SupportAgent(["Support Agent"])
+    PaymentGateway(["Payment Gateway"])
+    NotificationProvider(["Email/SMS Provider"])
+    RailwayTicketingSystem["Online Railway Ticketing System"]
+    Passenger -->|HTTPS| RailwayTicketingSystem
+    SupportAgent -->|HTTPS| RailwayTicketingSystem
+    RailwayTicketingSystem -->|REST/HTTPS| PaymentGateway
+    RailwayTicketingSystem -->|REST/HTTPS| NotificationProvider

@@ -1,0 +1,107 @@
+%%{init: {"theme":"default","securityLevel":"loose"} }%%
+erDiagram
+    STATION {
+        int StationId PK
+        string StationCode
+        string StationName
+    }
+    TRAIN {
+        int TrainId PK
+        string TrainNumber
+        string TrainName
+        int SourceStationId FK
+        int DestinationStationId FK
+    }
+    TRAIN_SCHEDULE {
+        int ScheduleId PK
+        int TrainId FK
+        date TravelDate
+        time DepartureTime
+        time ArrivalTime
+    }
+    TRAVEL_CLASS {
+        int TravelClassId PK
+        string ClassCode
+        string ClassName
+    }
+    SEAT_INVENTORY {
+        int SeatInventoryId PK
+        int ScheduleId FK
+        int TravelClassId FK
+        int TotalSeats
+        int AvailableSeats
+        decimal Fare
+    }
+    USER_ACCOUNT {
+        int UserId PK
+        string Email
+        string PhoneNumber
+        string Role
+    }
+    PASSENGER_PROFILE {
+        int PassengerProfileId PK
+        int UserId FK
+        string FullName
+        int Age
+        string Gender
+    }
+    BOOKING {
+        int BookingId PK
+        string BookingReference
+        int UserId FK
+        int ScheduleId FK
+        int TravelClassId FK
+        string BookingStatus
+        decimal TotalFare
+        datetime CreatedDate
+    }
+    BOOKING_PASSENGER {
+        int BookingPassengerId PK
+        int BookingId FK
+        int PassengerProfileId FK
+        string SeatNumber
+    }
+    PAYMENT {
+        int PaymentId PK
+        int BookingId FK
+        string PaymentMethod
+        decimal Amount
+        string PaymentStatus
+        string GatewayReference
+    }
+    CANCELLATION {
+        int CancellationId PK
+        int BookingId FK
+        datetime CancelledDate
+        decimal RefundAmount
+        string RefundStatus
+    }
+    NOTIFICATION {
+        int NotificationId PK
+        int BookingId FK
+        string Channel
+        string NotificationType
+        string DeliveryStatus
+    }
+    SUPPORT_REQUEST {
+        int SupportRequestId PK
+        int UserId FK
+        int BookingId FK
+        string Subject
+        string Status
+        datetime CreatedDate
+    }
+    STATION ||--o{ TRAIN : origin
+    TRAIN ||--o{ TRAIN_SCHEDULE : runs
+    TRAIN_SCHEDULE ||--o{ SEAT_INVENTORY : offers
+    TRAVEL_CLASS ||--o{ SEAT_INVENTORY : categorizes
+    USER_ACCOUNT ||--o{ PASSENGER_PROFILE : saves
+    USER_ACCOUNT ||--o{ BOOKING : places
+    TRAIN_SCHEDULE ||--o{ BOOKING : reserved_on
+    BOOKING ||--o{ BOOKING_PASSENGER : includes
+    PASSENGER_PROFILE ||--o{ BOOKING_PASSENGER : travels_as
+    BOOKING ||--o{ PAYMENT : paid_by
+    BOOKING ||--o{ CANCELLATION : cancelled_by
+    BOOKING ||--o{ NOTIFICATION : notified_by
+    USER_ACCOUNT ||--o{ SUPPORT_REQUEST : raises
+    BOOKING ||--o{ SUPPORT_REQUEST : referenced_by

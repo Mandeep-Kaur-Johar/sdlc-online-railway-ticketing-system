@@ -1,0 +1,31 @@
+%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
+flowchart TB
+    Passenger(["Passenger"])
+    subgraph Azure["Azure Subscription"]
+        subgraph Edge["Edge"]
+            FrontDoor["Azure Front Door / WAF"]
+        end
+        subgraph StaticApps["Azure Static Web Apps"]
+            ReactUI["React TypeScript Web UI"]
+        end
+        subgraph AppService["Azure App Service"]
+            RailwayAPI["Railway Ticketing API (.NET 8)"]
+        end
+        RailwayDB[("Azure SQL Database")]
+        KeyVault["Azure Key Vault"]
+        AppInsights["Application Insights"]
+        LogAnalytics["Log Analytics"]
+    end
+    subgraph External["External Systems"]
+        PaymentGateway(["Payment Gateway"])
+        NotificationProvider(["Email/SMS Provider"])
+    end
+    Passenger -->|HTTPS| FrontDoor
+    FrontDoor -->|HTTPS| ReactUI
+    ReactUI -->|HTTPS/JSON + JWT| RailwayAPI
+    RailwayAPI -->|TDS/SQL| RailwayDB
+    RailwayAPI -->|Fetch secrets| KeyVault
+    RailwayAPI -->|REST/HTTPS| PaymentGateway
+    RailwayAPI -->|REST/HTTPS| NotificationProvider
+    RailwayAPI -.->|Telemetry| AppInsights
+    AppInsights --> LogAnalytics

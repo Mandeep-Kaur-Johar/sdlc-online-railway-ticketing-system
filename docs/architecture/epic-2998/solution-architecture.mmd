@@ -1,0 +1,47 @@
+%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
+flowchart TB
+    Passenger(["Passenger"])
+    subgraph Frontend["Frontend Layer"]
+        ReactUI["React TypeScript Web UI"]
+    end
+    subgraph Security["Security Layer"]
+        JwtAuth["JWT Authentication"]
+        RoleAuthz["Role-Based Authorization"]
+    end
+    subgraph Backend["Backend Layer - ASP.NET Core .NET 8"]
+        TrainSearchAPI["Train Search API"]
+        BookingAPI["Booking API"]
+        PassengerAPI["Passenger Profile API"]
+        PaymentAPI["Payment API"]
+        NotificationAPI["Notification API"]
+        SupportAPI["Support API"]
+    end
+    subgraph Data["Data Layer"]
+        RailwayDB[("Azure SQL Database")]
+    end
+    subgraph External["External Systems"]
+        PaymentGateway(["Payment Gateway"])
+        NotificationProvider(["Email/SMS Provider"])
+    end
+    subgraph Platform["Platform Services"]
+        KeyVault["Azure Key Vault"]
+        AppInsights["Application Insights"]
+    end
+    Passenger -->|HTTPS| ReactUI
+    ReactUI -->|HTTPS/JSON| JwtAuth
+    JwtAuth --> RoleAuthz
+    RoleAuthz --> TrainSearchAPI
+    RoleAuthz --> BookingAPI
+    RoleAuthz --> PassengerAPI
+    RoleAuthz --> PaymentAPI
+    RoleAuthz --> NotificationAPI
+    RoleAuthz --> SupportAPI
+    TrainSearchAPI -->|SQL| RailwayDB
+    BookingAPI -->|SQL| RailwayDB
+    PassengerAPI -->|SQL| RailwayDB
+    PaymentAPI -->|SQL| RailwayDB
+    SupportAPI -->|SQL| RailwayDB
+    PaymentAPI -->|REST/HTTPS| PaymentGateway
+    NotificationAPI -->|REST/HTTPS| NotificationProvider
+    BookingAPI -->|Fetch secrets| KeyVault
+    PaymentAPI -.->|Telemetry| AppInsights
