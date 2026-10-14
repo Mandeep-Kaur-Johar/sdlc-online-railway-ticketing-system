@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -54,7 +52,11 @@ public class PaymentService : IPaymentService
 
         if (booking.Payment is not null && booking.Payment.Status == PaymentStatus.Pending)
         {
-            return new PaymentIntentDto(booking.BookingReference, booking.Payment.ProviderIntentId, booking.Payment.Amount, booking.Payment.Status.ToString());
+            return new PaymentIntentDto(
+                booking.BookingReference,
+                booking.Payment.ProviderIntentId,
+                booking.Payment.Amount,
+                booking.Payment.Status.ToString());
         }
 
         var payment = new Payment
@@ -123,24 +125,5 @@ public class PaymentService : IPaymentService
     }
 
     public bool VerifySignature(string? signature, string rawBody)
-    {
-        if (string.IsNullOrWhiteSpace(signature) || rawBody is null)
-        {
-            return false;
-        }
-
-        var expected = ComputeSignature(rawBody, _options.WebhookSecret);
-        var provided = signature.Trim();
-
-        return CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(expected),
-            Encoding.UTF8.GetBytes(provided.Length == expected.Length ? provided : expected.Length > 0 ? new string('0', expected.Length) : string.Empty));
-    }
-
-    public static string ComputeSignature(string rawBody, string secret)
-    {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(rawBody));
-        return Convert.ToHexString(hash).ToLowerInvariant();
-    }
+        => PaymentSignature.Verify(signature, rawBody, _options.WebhookSecret);
 }
