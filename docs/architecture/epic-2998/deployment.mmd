@@ -1,36 +1,23 @@
 flowchart TB
-    subgraph Client["Client Tier"]
-        Browser["Passenger browser HTTPS TLS 1.2+"]
-    end
-    subgraph Azure["Azure Region - Primary with zone redundancy"]
-        subgraph Public["Public Edge"]
-            FD["Azure Front Door and CDN"]
-            AGW["Application Gateway WAF prevention mode CRS 3.2"]
-            SWA["Azure Static Web Apps - React SPA"]
-        end
-        subgraph VNet["Virtual Network with NSGs and private endpoints"]
-            AKS["AKS cluster - 5 .NET 8 service deployments, blue-green"]
-            SQLDB[("Azure SQL Database railwaydb General Purpose zone redundant, PITR 35 days")]
-            Redis[("Azure Cache for Redis")]
-            Bus["Azure Service Bus topic booking-events"]
-            KV["Azure Key Vault - soft delete and purge protection"]
-        end
-        subgraph Obs["Observability"]
-            AI["Application Insights"]
-            LA["Log Analytics - 365 day audit retention"]
-        end
-    end
-    subgraph Ext["External"]
-        PSP["Payment Service Provider"]
-        Comms["Email and SMS Provider"]
-    end
+    Browser["Passenger browser HTTPS TLS 1.2 plus"]
+    FD["Azure Front Door and CDN"]
+    SWA["Azure Static Web Apps React SPA"]
+    AGW["Application Gateway WAF prevention mode CRS 3.2"]
+    AKS["AKS cluster five dotnet 8 services blue green"]
+    SQLDB[("Azure SQL railwaydb zone redundant PITR 35 days")]
+    Redis[("Azure Cache for Redis")]
+    Bus["Azure Service Bus booking-events"]
+    KV["Azure Key Vault soft delete purge protection"]
+    AI["Application Insights"]
+    LA["Log Analytics 365 day audit retention"]
+    PSP["Payment Service Provider"]
+    Comms["Email and SMS Provider"]
     Browser --> FD --> SWA
     FD --> AGW --> AKS
-    AKS -->|Private endpoint| SQLDB
-    AKS -->|Private endpoint| Redis
-    AKS -->|Private endpoint| Bus
-    AKS -->|Managed identity| KV
-    AKS -.-> AI
-    AI --> LA
-    AKS -->|HTTPS outbound| PSP
-    AKS -->|HTTPS outbound| Comms
+    AKS --> SQLDB
+    AKS --> Redis
+    AKS --> Bus
+    AKS --> KV
+    AKS --> AI --> LA
+    AKS --> PSP
+    AKS --> Comms
