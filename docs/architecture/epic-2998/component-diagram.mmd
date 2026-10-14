@@ -1,46 +1,31 @@
 flowchart TB
-    subgraph UI["React 18 TypeScript SPA"]
-        SearchPage["Search and Availability Pages"]
-        BookingPage["Booking and Profile Pages"]
-        PaymentPage["Payment and Cancellation Pages"]
-        SupportPage["Support Request Pages"]
-    end
-    subgraph SearchSvc["Search Service"]
-        SearchCtl["TrainSearchController GET /api/v1/trains/search"]
-        AvailSvc["AvailabilityService - class level inventory"]
-        CacheRepo["RedisCacheRepository 60s TTL"]
-    end
-    subgraph BookingSvc["Booking Service"]
-        BookingCtl["BookingsController POST /api/v1/bookings"]
-        ProfileCtl["PassengerProfilesController"]
-        SeatLock["SeatInventoryLockManager - max 6 passengers"]
-        RefGen["BookingReferenceGenerator RLY-2998-000123"]
-    end
-    subgraph PaymentSvc["Payment Service"]
-        PayCtl["PaymentsController payment intent"]
-        Webhook["WebhookVerifier HMAC-SHA256"]
-        RefundEng["RefundPolicyEngine - hours before departure table"]
-        TicketIssuer["TicketIssuer - 15 min hold expiry"]
-    end
-    subgraph NotifySvc["Notification Service"]
-        BusSub["ServiceBusSubscriber booking-events"]
-        Dispatch["NotificationDispatcher - 10 attempts then DLQ"]
-    end
-    subgraph SupportSvc["Support Service"]
-        SupportCtl["SupportRequestsController"]
-        SupportWf["SupportWorkflow logged tracked closed"]
-    end
-    SearchPage --> SearchCtl
+    SearchPage["Search and Availability Pages"]
+    BookingPage["Booking and Profile Pages"]
+    PaymentPage["Payment and Cancellation Pages"]
+    SupportPage["Support Request Pages"]
+    SearchCtl["TrainSearchController GET api v1 trains search"]
+    AvailSvc["AvailabilityService class level inventory"]
+    CacheRepo["RedisCacheRepository 60s TTL"]
+    BookingCtl["BookingsController POST api v1 bookings"]
+    ProfileCtl["PassengerProfilesController"]
+    SeatLock["SeatInventoryLockManager max 6 passengers"]
+    RefGen["BookingReferenceGenerator"]
+    PayCtl["PaymentsController payment intent"]
+    Webhook["WebhookVerifier HMAC SHA256"]
+    RefundEng["RefundPolicyEngine hours before departure"]
+    TicketIssuer["TicketIssuer 15 minute hold expiry"]
+    BusSub["ServiceBusSubscriber booking-events"]
+    Dispatch["NotificationDispatcher 10 attempts then DLQ"]
+    SupportCtl["SupportRequestsController"]
+    SupportWf["SupportWorkflow logged tracked closed"]
+    SearchPage --> SearchCtl --> AvailSvc --> CacheRepo
     BookingPage --> BookingCtl
     BookingPage --> ProfileCtl
-    PaymentPage --> PayCtl
-    SupportPage --> SupportCtl
-    SearchCtl --> AvailSvc --> CacheRepo
     BookingCtl --> SeatLock
     BookingCtl --> RefGen
+    PaymentPage --> PayCtl
     PayCtl --> TicketIssuer
     Webhook --> TicketIssuer
     PayCtl --> RefundEng
-    RefGen --> BusSub
-    BusSub --> Dispatch
-    SupportCtl --> SupportWf
+    RefGen --> BusSub --> Dispatch
+    SupportPage --> SupportCtl --> SupportWf
