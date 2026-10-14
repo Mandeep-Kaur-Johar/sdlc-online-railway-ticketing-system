@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+
+# Node
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# Editors
+.vs/
+.vscode/
+.idea/
+.DS_Store
