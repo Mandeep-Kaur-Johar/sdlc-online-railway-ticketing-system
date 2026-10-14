@@ -1,12 +1,16 @@
-flowchart TD
-  DEV[Developer commit feature branch] --> PR[Pull Request to main]
-  PR --> BUILD[GitHub Actions build dotnet 8 and npm ci]
-  BUILD --> UT[Unit Tests xUnit and Vitest coverage gate 80 percent]
-  UT --> SCAN[CodeQL SAST and dependency scan]
-  SCAN --> ART[Publish artifacts container images to Azure Container Registry]
-  ART --> DEVENV[Deploy to DEV automatic]
-  DEVENV --> IT[Integration and API tests]
-  IT --> QAENV[Deploy to QA manual approval]
-  QAENV --> PERF[Performance tests p95 under 500 ms]
-  PERF --> PRODENV[Deploy to PROD blue green approval by Release Manager]
-  PRODENV --> MON[Application Insights alerts and rollback to previous slot]
+flowchart LR
+    Dev["Developer commit"]
+    PR["Pull request two approvals"]
+    Build["GitHub Actions build npm and dotnet 8"]
+    Unit["Unit tests 80 percent overall 90 percent booking and payment"]
+    Scan["CodeQL dependency and secret scanning"]
+    Artifact["Versioned container image and SPA bundle"]
+    DevEnv["Dev environment auto deploy"]
+    Integration["Integration and contract tests"]
+    QA["QA environment manual approval"]
+    Perf["Load test 500 concurrent search users 100 bookings per minute"]
+    Stage["Staging slot"]
+    Prod["Production blue green swap Sunday 02:00 to 04:00 UTC"]
+    Monitor["Application Insights monitoring and rollback"]
+    Dev --> PR --> Build --> Unit --> Scan --> Artifact --> DevEnv --> Integration --> QA --> Perf --> Stage --> Prod --> Monitor
+    Monitor --> Stage
