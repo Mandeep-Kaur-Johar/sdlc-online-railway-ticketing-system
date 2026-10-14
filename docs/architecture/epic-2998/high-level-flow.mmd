@@ -1,0 +1,22 @@
+flowchart TD
+  P[Passenger Browser React 18 TypeScript] -->|HTTPS TLS 1.2+ JWT| AGW[Azure Application Gateway WAF]
+  AGW --> APIM[API Gateway Rate Limit 100 rps]
+  APIM --> SEARCH[Search Service .NET 8 Web API US 3000 3001]
+  APIM --> BOOK[Booking Service .NET 8 Web API US 3003 3004]
+  APIM --> PAY[Payment Service .NET 8 Web API US 3006 3007]
+  APIM --> NOTIF[Notification Service .NET 8 Worker US 3009]
+  APIM --> SUP[Support Service .NET 8 Web API US 3010]
+  SEARCH --> CACHE[(Azure Cache for Redis TTL 60s)]
+  SEARCH --> SQL[(Azure SQL Database railwaydb)]
+  BOOK --> SQL
+  PAY --> SQL
+  SUP --> SQL
+  PAY -->|HTTPS webhook| PSP[External Payment Gateway]
+  NOTIF -->|SMTP and SMS API| COMMS[Email and SMS Provider]
+  BOOK -->|booking events| BUS[Azure Service Bus topic booking-events]
+  BUS --> NOTIF
+  SEARCH --> AI[Application Insights]
+  BOOK --> AI
+  PAY --> AI
+  NOTIF --> AI
+  SUP --> AI

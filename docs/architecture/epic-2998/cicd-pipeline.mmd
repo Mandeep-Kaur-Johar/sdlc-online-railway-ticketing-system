@@ -1,0 +1,12 @@
+flowchart TD
+  DEV[Developer commit feature branch] --> PR[Pull Request to main]
+  PR --> BUILD[GitHub Actions build dotnet 8 and npm ci]
+  BUILD --> UT[Unit Tests xUnit and Vitest coverage gate 80 percent]
+  UT --> SCAN[CodeQL SAST and dependency scan]
+  SCAN --> ART[Publish artifacts container images to Azure Container Registry]
+  ART --> DEVENV[Deploy to DEV automatic]
+  DEVENV --> IT[Integration and API tests]
+  IT --> QAENV[Deploy to QA manual approval]
+  QAENV --> PERF[Performance tests p95 under 500 ms]
+  PERF --> PRODENV[Deploy to PROD blue green approval by Release Manager]
+  PRODENV --> MON[Application Insights alerts and rollback to previous slot]
