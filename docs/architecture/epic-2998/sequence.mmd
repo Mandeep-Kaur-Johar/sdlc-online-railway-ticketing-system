@@ -1,0 +1,29 @@
+%%{init: {"theme":"default","securityLevel":"loose"} }%%
+sequenceDiagram
+    actor Passenger
+    participant ReactUI as React TypeScript Web UI
+    participant TrainSearchAPI as Train Search API
+    participant BookingAPI as Booking API
+    participant PaymentAPI as Payment API
+    participant PaymentGateway as Payment Gateway
+    participant NotificationAPI as Notification API
+    participant RailwayDB as Azure SQL Database
+    Passenger->>ReactUI: Enter source, destination, date
+    ReactUI->>TrainSearchAPI: GET /api/trains/search
+    TrainSearchAPI->>RailwayDB: Query trains, schedules, fares
+    RailwayDB-->>TrainSearchAPI: Matching trains
+    TrainSearchAPI-->>ReactUI: Trains with availability by class
+    ReactUI->>BookingAPI: POST /api/bookings
+    BookingAPI->>RailwayDB: Reserve seats, create booking reference
+    BookingAPI-->>ReactUI: Booking pending payment
+    ReactUI->>PaymentAPI: POST /api/payments
+    PaymentAPI->>PaymentGateway: Authorize payment
+    PaymentGateway-->>PaymentAPI: Payment result
+    alt Payment successful
+        PaymentAPI->>RailwayDB: Confirm booking and issue ticket
+        PaymentAPI->>NotificationAPI: Trigger confirmation
+        PaymentAPI-->>ReactUI: Ticket confirmed
+    else Payment failed
+        PaymentAPI->>RailwayDB: Release seats, booking unconfirmed
+        PaymentAPI-->>ReactUI: Payment failed, no confirmed ticket
+    end

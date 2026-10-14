@@ -1,0 +1,13 @@
+%%{init: {"theme":"default","securityLevel":"loose","flowchart":{"htmlLabels":true,"curve":"linear"}} }%%
+flowchart LR
+    Developer(["Developer"]) -->|feature/story branch| PullRequest["Pull Request"]
+    PullRequest --> Build["Build (.NET 8 + React)"]
+    Build --> Tests["Unit and Integration Tests"]
+    Tests --> Scan["CodeQL, Dependency and Secret Scan"]
+    Scan --> Artifact["Versioned Artifact"]
+    Artifact --> DevEnv["Dev Environment (auto deploy)"]
+    DevEnv --> TestEnv["Test Environment (RC tag + regression)"]
+    TestEnv --> Approval["Release Manager Approval"]
+    Approval --> Staging["Production Staging Slot"]
+    Staging -->|Smoke test and slot swap| Production["Production"]
+    Production -.->|Rollback by slot swap| Staging
